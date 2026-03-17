@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Apertura de Cuenta BBVA × TaxDown - Prototipo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#EDEEF2;min-height:100vh}
+input,select,button{font-family:inherit}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+// ============================================================
+// IMAGE SLOTS - Replace src values with your actual image URLs
+// ============================================================
+const IMAGES={
+  headerCoBrand:{src:"",alt:"BBVA × TaxDown",w:200,h:36},
+  cardIllustration:{src:"",alt:"Microilustración BBVA cuenta",w:192,h:192},
+  cameraIcon:{src:"",alt:"Icono cámara",w:48,h:48},
+  ineIcon:{src:"",alt:"Icono INE",w:48,h:48},
+  selfieIcon:{src:"",alt:"Icono selfie",w:48,h:48},
+  successIcon:{src:"",alt:"Icono éxito",w:72,h:72},
+  errorIcon:{src:"",alt:"Icono error",w:56,h:56},
+  smsIcon:{src:"",alt:"Icono SMS",w:44,h:44},
+  spinnerIcon:{src:"",alt:"Spinner",w:48,h:48},
+};
+
+// ============================================================
+// COLORS (Spherica BBVA palette)
+// ============================================================
+const C={
+  midnight:"#070E46",electric:"#001391",royalDark:"#2165CA",royal:"#2B7BF4",
+  serene:"#85C8FF",blueLight:"#D6E9F8",
+  g600:"#47536D",g500:"#ADB8C2",g400:"#CAD1D8",g300:"#E2E6EA",g200:"#F4F5F7",g100:"#F7F8F8",
+  white:"#FFFFFF",red:"#C30A0A",greenDark:"#024700",greenLight:"#EBFFF0",bg:"#EDEEF2",
+  inputBorder:"#9298A1",inputText:"#002994",
+};
+
+const STEPS={checks:1,personal:2,address:3,verify_id:4,ine_instructions:4,ine_scan:4,selfie_scan:4,id_result:4,terms:5,otp:5};
+const TOTAL=5;
+const F="system-ui,sans-serif";
+const SERIF="Georgia,'Times New Roman',serif";
+
+// ============================================================
+// IMAGE SLOT COMPONENT
+// ============================================================
+const ImgSlot=({name,fallback,style:xs={}})=>{
+  const img=IMAGES[name];
+  if(img&&img.src)return <img src={img.src} alt={img.alt} style={{width:img.w,height:img.h,objectFit:"contain",...xs}}/>;
+  return fallback||<div style={{width:img?.w||48,height:img?.h||48,background:C.blueLight,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",border:`1px dashed ${C.g400}`,...xs}}><span style={{fontSize:9,color:C.g500,fontFamily:F,textAlign:"center",padding:4}}>{img?.alt||name}</span></div>;
+};
+
+// ============================================================
+// ICONS
+// ============================================================
+const BackIcon=()=><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M13 4L7 10L13 16" stroke={C.white} strokeWidth="2" strokeLinecap="round"/></svg>;
+const CloseIcon=({c=C.g500,s=14})=><svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke={c} strokeWidth="1.5" strokeLinecap="round"/></svg>;
+const CheckIcon=({c=C.white,s=12})=><svg width={s} height={s} viewBox="0 0 14 14" fill="none"><path d="M2 7L5.5 10.5L12 3.5" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const InfoIcon=({c=C.royalDark})=><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke={c} strokeWidth="1.3"/><path d="M8 7V11M8 5V5.5" stroke={c} strokeWidth="1.3" strokeLinecap="round"/></svg>;
+const WarningIcon=()=><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1L15 14H1L8 1Z" fill="#FEE2E2" stroke={C.red} strokeWidth="1"/><path d="M8 6V9M8 11V11.5" stroke={C.red} strokeWidth="1.2" strokeLinecap="round"/></svg>;
+const SuccessIconLg=()=><svg width="72" height="72" viewBox="0 0 72 72" fill="none"><circle cx="36" cy="36" r="34" fill={C.greenLight} stroke={C.greenDark} strokeWidth="2"/><path d="M22 36L32 46L50 28" stroke={C.greenDark} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+// ============================================================
+// COMPONENTS
+// ============================================================
+const Progress=({step})=>{
+  const pct=step?Math.round((step/TOTAL)*100):0;
+  return <div style={{height:4,background:C.white,borderRadius:2,overflow:"hidden",marginBottom:16}}><div style={{height:"100%",width:`${pct}%`,background:C.electric,borderRadius:2,transition:"width 0.4s ease"}}/></div>;
+};
+
+const Header=({title,onBack})=>(
+  <div style={{flexShrink:0}}>
+    <div style={{background:C.electric,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={onBack}><BackIcon/><span style={{color:C.white,fontSize:13,fontFamily:F,opacity:.85}}>Volver</span></div>
+      <span style={{color:C.white,fontWeight:800,fontSize:15,fontFamily:F,letterSpacing:1.5}}>BBVA</span>
+    </div>
+    <div style={{padding:"16px 16px 0"}}><h2 style={{margin:0,fontSize:21,fontWeight:700,color:C.midnight,fontFamily:F}}>{title}</h2></div>
+  </div>
+);
+
+const CoBrandHeader=({h=160,compact})=>(
+  <div style={{height:h,background:C.electric,display:"flex",flexDirection:compact?"column":"row",alignItems:"center",justifyContent:"center",gap:compact?12:20,flexShrink:0}}>
+    <ImgSlot name="headerCoBrand" fallback={
+      <div style={{display:"flex",alignItems:"center",gap:compact?16:20}}>
+        <span style={{color:C.white,fontWeight:800,fontSize:compact?18:20,letterSpacing:2,fontFamily:F}}>BBVA</span>
+        <div style={{width:1,height:compact?24:32,background:"rgba(255,255,255,0.3)"}}/>
+        <span style={{color:C.white,fontWeight:600,fontSize:compact?13:14,letterSpacing:.5,fontFamily:F}}>taxdown.</span>
+      </div>
+    }/>
+    {compact&&<span style={{color:"rgba(255,255,255,0.85)",fontSize:15,fontWeight:600,textAlign:"center",fontFamily:F}}>Tu devolución, en buenas manos</span>}
+  </div>
+);
+
+const Card=({children,p="20px 16px"})=>(
+  <div style={{background:C.white,borderRadius:14,padding:p,boxShadow:"0 1px 4px rgba(7,14,70,0.06)",marginBottom:12}}>{children}</div>
+);
+
+const Input=({label,value,onChange,type="text",error,placeholder,disabled})=>(
+  <div style={{marginBottom:14}}>
+    <div style={{height:40,background:disabled?C.g100:C.white,borderRadius:10,outline:`1px ${error?C.red:C.inputBorder} solid`,outlineOffset:-1,display:"flex",alignItems:"center",padding:"0 13px"}}>
+      <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder||label} disabled={disabled}
+        style={{border:"none",outline:"none",flex:1,fontSize:11,color:value?C.inputText:C.inputBorder,fontWeight:500,textTransform:"uppercase",letterSpacing:.5,fontFamily:F,background:"transparent",width:"100%"}}/>
+      {value&&!disabled&&<span style={{cursor:"pointer",color:C.inputBorder,fontSize:11,fontWeight:500,letterSpacing:.5}} onClick={()=>onChange("")}>✕</span>}
+    </div>
+    {error&&<div style={{display:"flex",alignItems:"center",gap:4,marginTop:5}}><WarningIcon/><span style={{fontSize:12,color:C.red,fontFamily:F}}>{error}</span></div>}
+  </div>
+);
+
+const Sel=({label,value,onChange,options})=>(
+  <div style={{marginBottom:14}}>
+    <div style={{height:40,background:C.white,borderRadius:10,outline:`1px ${C.inputBorder} solid`,outlineOffset:-1,display:"flex",alignItems:"center",padding:"0 4px"}}>
+      <select value={value} onChange={e=>onChange(e.target.value)} style={{width:"100%",border:"none",outline:"none",fontSize:11,color:value?C.inputText:C.inputBorder,fontWeight:500,textTransform:"uppercase",letterSpacing:.5,fontFamily:F,background:"transparent",padding:"0 9px",appearance:"auto"}}>
+        <option value="">{label}</option>
+        {options.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  </div>
+);
+
+const Check=({checked,onChange,children})=>(
+  <div style={{display:"flex",gap:12,marginBottom:16,cursor:"pointer",alignItems:"flex-start"}} onClick={()=>onChange(!checked)}>
+    <div style={{width:22,height:22,minWidth:22,borderRadius:6,border:`2px solid ${checked?C.electric:C.g400}`,background:checked?C.electric:C.white,display:"flex",alignItems:"center",justifyContent:"center",marginTop:1,transition:"all 0.15s"}}>
+      {checked&&<CheckIcon/>}
+    </div>
+    <span style={{fontSize:14,color:C.midnight,fontFamily:F,lineHeight:1.5}}>{children}</span>
+  </div>
+);
+
+const Btn=({children,onClick,disabled})=>(
+  <button onClick={onClick} disabled={disabled}
+    style={{width:"100%",padding:"15px 0",borderRadius:10,border:"none",background:disabled?C.g300:C.electric,color:disabled?C.g500:C.white,fontSize:11,fontWeight:500,textTransform:"uppercase",letterSpacing:.5,fontFamily:F,cursor:disabled?"not-allowed":"pointer",transition:"all 0.2s"}}>
+    {children}
+  </button>
+);
+
+const BtnLink=({children,onClick})=>(
+  <div style={{textAlign:"center",marginTop:12}}><span style={{fontSize:14,color:C.royalDark,fontFamily:F,cursor:"pointer",fontWeight:500}} onClick={onClick}>{children}</span></div>
+);
+
+const Msg=({children,type="info"})=>{
+  const bg=type==="error"?"#FEF2F2":C.blueLight;
+  const ic=type==="error"?C.red:C.royalDark;
+  return <div style={{background:bg,borderRadius:10,padding:"12px 14px",display:"flex",gap:10,alignItems:"flex-start",marginBottom:16}}>
+    <div style={{marginTop:1}}><InfoIcon c={ic}/></div>
+    <span style={{fontSize:13,color:C.midnight,fontFamily:F,lineHeight:1.5}}>{children}</span>
+  </div>;
+};
+
+const Link=({children})=><span style={{color:C.royalDark,textDecoration:"underline",cursor:"pointer"}}>{children}</span>;
+
+const Footer=({step,children})=>(
+  <div style={{background:C.bg,padding:"0 16px 20px",flexShrink:0}}>
+    {step&&<Progress step={step}/>}
+    {children}
+  </div>
+);
+
+const Phone=({children})=>(
+  <div style={{width:375,height:812,background:C.bg,borderRadius:28,overflow:"hidden",border:`1px solid ${C.g400}`,display:"flex",flexDirection:"column",boxShadow:"0 12px 40px rgba(7,14,70,0.15)"}}>
+    <div style={{height:32,background:C.bg,display:"flex",justifyContent:"center",alignItems:"center"}}><div style={{width:50,height:5,background:C.g400,borderRadius:3}}/></div>
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>{children}</div>
+    <div style={{height:10,background:C.bg,display:"flex",justifyContent:"center",paddingTop:4}}><div style={{width:120,height:4,background:C.g400,borderRadius:2}}/></div>
+  </div>
+);
+
+const BRow=({t})=><div style={{display:"flex",gap:12,alignItems:"center",marginBottom:14}}>
+  <div style={{width:28,height:28,minWidth:28,borderRadius:8,background:C.blueLight,display:"flex",alignItems:"center",justifyContent:"center"}}><CheckIcon c={C.electric} s={11}/></div>
+  <span style={{fontSize:14,color:C.midnight,fontFamily:F}}>{t}</span>
+</div>;
+
+const SRow=({n,t,last})=><div style={{display:"flex",gap:12,alignItems:"center",marginBottom:last?0:12}}>
+  <div style={{width:26,height:26,minWidth:26,borderRadius:13,background:C.electric,color:C.white,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,fontFamily:F}}>{n}</div>
+  <span style={{fontSize:14,color:C.g600,fontFamily:F}}>{t}</span>
+</div>;
+
+const Bullet=({t})=><div style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:6}}>
+  <div style={{width:5,height:5,minWidth:5,borderRadius:3,background:C.electric,marginTop:7}}/>
+  <span style={{fontSize:13,color:C.g600,fontFamily:F}}>{t}</span>
+</div>;
+
+// ============================================================
+// APP
+// ============================================================
+function App(){
+  const [scr,setScr]=useState("start");
+  const [form,setForm]=useState({name:"",ap1:"",ap2:"",dob:"",birthPlace:"",gender:"",cp:"",colonia:"",street:"",numExt:"",phone:"",email:"",emailConfirm:""});
+  const [chk,setChk]=useState({privacy:false,location:false});
+  const [tc,setTc]=useState({terms:false,privacy:false});
+  const [otp,setOtp]=useState("");
+  const [otpA,setOtpA]=useState(0);
+  const [err,setErr]=useState({});
+  const [loading,setLoading]=useState(false);
+
+  const u=(k,v)=>{setForm(p=>({...p,[k]:v}));setErr(p=>{const n={...p};delete n[k];return n})};
+  const sim=(next,ms=1400)=>{setLoading(true);setTimeout(()=>{setLoading(false);setScr(next)},ms)};
+  const reset=()=>{setOtp("");setOtpA(0);setForm({name:"",ap1:"",ap2:"",dob:"",birthPlace:"",gender:"",cp:"",colonia:"",street:"",numExt:"",phone:"",email:"",emailConfirm:""});setChk({privacy:false,location:false});setTc({terms:false,privacy:false});setErr({})};
+
+  const valP=()=>{
+    const e={};
+    if(!form.name)e.name="Campo requerido";
+    if(!form.ap1)e.ap1="Campo requerido";
+    if(!form.dob)e.dob="Campo requerido";
+    else{const y=parseInt(form.dob.split("-")[0]||"0"),n=new Date().getFullYear();if(y>n)e.dob="Año posterior al actual";else if(n-y<18)e.dob="Debes ser mayor de 18 años";}
+    if(!form.gender)e.gender="Campo requerido";
+    if(!form.birthPlace)e.birthPlace="Campo requerido";
+    setErr(e);return Object.keys(e).length===0;
+  };
+  const valA=()=>{
+    const e={};
+    if(!form.cp)e.cp="Campo requerido";else if(form.cp.length<5)e.cp="Debe ser de 5 dígitos";
+    if(!form.street)e.street="Campo requerido";
+    if(!form.phone)e.phone="Campo requerido";else if(form.phone.length<10)e.phone="Debe ser de 10 dígitos";
+    if(!form.email)e.email="Campo requerido";else if(!form.email.includes("@"))e.email="Formato inválido";
+    if(!form.emailConfirm)e.emailConfirm="Campo requerido";else if(form.email!==form.emailConfirm)e.emailConfirm="Los correos no coinciden";
+    setErr(e);return Object.keys(e).length===0;
+  };
+
+  const Result=({success,title,desc,btnText,onBtn,imgSlot})=>(
+    <>
+      <div style={{background:C.electric,padding:"14px 16px"}}><span style={{color:C.white,fontWeight:800,fontSize:15,fontFamily:F,letterSpacing:1.5}}>BBVA</span></div>
+      <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 16px"}}>
+        <Card p="32px 20px">
+          <div style={{textAlign:"center"}}>
+            <div style={{width:56,height:56,borderRadius:28,background:success?C.greenLight:"#FEF2F2",margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {imgSlot&&IMAGES[imgSlot]?.src?<ImgSlot name={imgSlot}/>:success?<CheckIcon c={C.greenDark} s={22}/>:<CloseIcon c={C.red} s={20}/>}
+            </div>
+            <div style={{fontSize:18,fontWeight:700,color:C.midnight,fontFamily:F,marginBottom:8}}>{title}</div>
+            <div style={{fontSize:14,color:C.g600,fontFamily:F,lineHeight:1.5}}>{desc}</div>
+          </div>
+        </Card>
+      </div>
+      <Footer><Btn onClick={onBtn}>{btnText}</Btn></Footer>
+    </>
+  );
+
+  const S={
+    start:(<>
+      <CoBrandHeader/>
+      <div style={{flex:1,overflow:"auto",padding:"0 16px",marginTop:-20}}>
+        <Card p="28px 20px">
+          <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
+            <ImgSlot name="cardIllustration" fallback={
+              <div style={{width:192,height:192,background:`linear-gradient(145deg,${C.blueLight},${C.serene})`,borderRadius:24,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+                <div style={{width:80,height:80,background:C.electric,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{color:C.white,fontWeight:800,fontSize:16,letterSpacing:1.5,fontFamily:F}}>BBVA</span>
+                </div>
+                <div style={{position:"absolute",bottom:16,right:16,width:32,height:32,background:"#F5C842",borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{color:C.electric,fontSize:16,fontWeight:700}}>↓</span>
+                </div>
+              </div>
+            }/>
+          </div>
+          <div style={{fontSize:20,fontWeight:700,color:C.midnight,textAlign:"center",textTransform:"uppercase",letterSpacing:.5,fontFamily:SERIF,marginBottom:10}}>Abre tu cuenta BBVA<br/>para recibir tu devolución</div>
+          <div style={{textAlign:"center",color:C.g600,fontSize:11,fontWeight:500,textTransform:"uppercase",letterSpacing:.5,fontFamily:F}}>Nos aliamos con BBVA para que recuperes<br/>tu saldo de forma segura y sin complicaciones.</div>
+        </Card>
+      </div>
+      <Footer><Btn onClick={()=>setScr("onboarding")}>Conoce más</Btn></Footer>
+    </>),
+
+    onboarding:(<>
+      <CoBrandHeader h={120} compact/>
+      <div style={{flex:1,overflow:"auto",padding:"0 16px",marginTop:-16}}>
+        <Card>
+          <div style={{fontSize:13,fontWeight:700,color:C.midnight,textTransform:"uppercase",letterSpacing:.5,marginBottom:14,fontFamily:F}}>Beneficios de tu cuenta BBVA</div>
+          <BRow t="Sin comisiones de apertura ni saldo mínimo"/>
+          <BRow t="Acceso inmediato a tu dinero en cuanto el SAT lo deposite"/>
+          <BRow t="Tarjeta digital para compras por internet"/>
+          <div style={{display:"flex",gap:12,alignItems:"center"}}><div style={{width:28,height:28,minWidth:28,borderRadius:8,background:C.blueLight,display:"flex",alignItems:"center",justifyContent:"center"}}><CheckIcon c={C.electric} s={11}/></div><span style={{fontSize:14,color:C.midnight,fontFamily:F}}>Tu dinero seguro y protegido por el IPAB</span></div>
+        </Card>
+        <Card>
+          <div style={{fontSize:13,fontWeight:700,color:C.midnight,textTransform:"uppercase",letterSpacing:.5,marginBottom:14,fontFamily:F}}>Solo 3 pasos y listo</div>
+          <SRow n={1} t="Cuéntanos de ti"/>
+          <SRow n={2} t="Valida tu identidad con tu INE vigente"/>
+          <SRow n={3} t="Confirma y recibe tu cuenta" last/>
+        </Card>
+        <Msg>Nos aliamos con BBVA para que recuperes tu saldo sin complicaciones. El costo de TaxDown se descuenta automáticamente de tu devolución.</Msg>
+      </div>
+      <Footer><Btn onClick={()=>setScr("checks")}>Comenzar</Btn></Footer>
+    </>),
+
+    checks:(<>
+      <Header title="Autorizaciones" onBack={()=>setScr("onboarding")}/>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card>
+          <p style={{fontSize:13,color:C.g600,fontFamily:F,margin:"0 0 18px",lineHeight:1.5}}>Estás por contratar tu Libretón Básico Cuenta Digital con BBVA. Consulta y acepta las siguientes autorizaciones:</p>
+          <Check checked={chk.privacy} onChange={v=>setChk(p=>({...p,privacy:v}))}>Autorizo la transferencia de mis datos personales a BBVA para que sean tratados en términos del <Link>Aviso de Privacidad</Link>.</Check>
+          <Check checked={chk.location} onChange={v=>setChk(p=>({...p,location:v}))}>Autorizo el <Link>acceso y obtención de la ubicación</Link> de mi dispositivo móvil durante la contratación.</Check>
+        </Card>
+      </div>
+      <Footer step={1}><Btn onClick={()=>setScr("personal")} disabled={!chk.privacy||!chk.location}>Continuar</Btn><BtnLink onClick={()=>setScr("cancel")}>Cancelar</BtnLink></Footer>
+    </>),
+
+    personal:(<>
+      <Header title="Datos personales" onBack={()=>setScr("checks")}/>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card>
+          <Input label="Nombre(s)" value={form.name} onChange={v=>u("name",v)} error={err.name}/>
+          <Input label="Primer apellido" value={form.ap1} onChange={v=>u("ap1",v)} error={err.ap1}/>
+          <Input label="Segundo apellido" value={form.ap2} onChange={v=>u("ap2",v)}/>
+          <Input label="Fecha de nacimiento" value={form.dob} onChange={v=>u("dob",v)} type="date" error={err.dob}/>
+          <Msg>Debes ser mayor de 18 años de edad.</Msg>
+          <Sel label="Lugar de nacimiento" value={form.birthPlace} onChange={v=>u("birthPlace",v)} options={["Ciudad de México","Jalisco","Nuevo León","Estado de México","Puebla"]}/>
+          <Sel label="Género (como aparece en tu INE)" value={form.gender} onChange={v=>u("gender",v)} options={["Hombre","Mujer","No binario"]}/>
+          <Msg>No binario aparece como 'Sexo: X' en la INE vigente.</Msg>
+        </Card>
+        <Msg>Al continuar, otorgas tu consentimiento para corroborar datos con INE y Renapo.</Msg>
+      </div>
+      <Footer step={2}><Btn onClick={()=>{if(valP())setScr("address")}}>Continuar</Btn></Footer>
+    </>),
+
+    address:(<>
+      <Header title="Domicilio" onBack={()=>setScr("personal")}/>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card>
+          <Input label="Código postal" value={form.cp} onChange={v=>u("cp",v.replace(/\D/g,"").slice(0,5))} error={err.cp} placeholder="Código postal (5 dígitos)"/>
+          <Input label="Estado" value={form.cp.length===5?"Ciudad de México":""} onChange={()=>{}} disabled/>
+          <Input label="Municipio o Alcaldía" value={form.cp.length===5?"Cuauhtémoc":""} onChange={()=>{}} disabled/>
+          <Sel label="Colonia" value={form.colonia} onChange={v=>u("colonia",v)} options={["Centro","Roma Norte","Condesa","Juárez","Santa María"]}/>
+          <Input label="Calle" value={form.street} onChange={v=>u("street",v)} error={err.street}/>
+          <div style={{display:"flex",gap:12}}>
+            <div style={{flex:1}}><Input label="Núm. ext." value={form.numExt} onChange={v=>u("numExt",v)}/></div>
+            <div style={{flex:1}}><Input label="Núm. int." value="" onChange={()=>{}}/></div>
+          </div>
+        </Card>
+        <Card>
+          <div style={{fontSize:15,fontWeight:600,color:C.midnight,fontFamily:F,marginBottom:4}}>Datos de contacto</div>
+          <p style={{fontSize:12,color:C.g600,fontFamily:F,margin:"0 0 16px"}}>BBVA usará estos datos para enviarte la información de contratación.</p>
+          <Input label="Número celular (10 dígitos)" value={form.phone} onChange={v=>u("phone",v.replace(/\D/g,"").slice(0,10))} error={err.phone}/>
+          <Input label="Correo electrónico" value={form.email} onChange={v=>u("email",v)} error={err.email}/>
+          <Input label="Confirma tu correo electrónico" value={form.emailConfirm} onChange={v=>u("emailConfirm",v)} error={err.emailConfirm}/>
+        </Card>
+      </div>
+      <Footer step={3}><Btn onClick={()=>{if(valA())sim("verify_id")}}>Continuar</Btn></Footer>
+    </>),
+
+    verify_id:(<>
+      <Header title="Verificación de identidad" onBack={()=>setScr("address")}/>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card p="32px 20px">
+          <div style={{textAlign:"center"}}>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><ImgSlot name="cameraIcon"/></div>
+            <div style={{fontSize:16,fontWeight:600,color:C.midnight,fontFamily:F,marginBottom:20}}>Escanea tu INE y tómate una selfie</div>
+            <div style={{display:"flex",justifyContent:"center",gap:32,margin:"0 0 8px"}}>
+              <div style={{textAlign:"center"}}><div style={{display:"flex",justifyContent:"center",marginBottom:8}}><ImgSlot name="ineIcon"/></div><span style={{fontSize:12,color:C.g600,fontFamily:F}}>Escanear INE</span></div>
+              <div style={{textAlign:"center"}}><div style={{display:"flex",justifyContent:"center",marginBottom:8}}><ImgSlot name="selfieIcon"/></div><span style={{fontSize:12,color:C.g600,fontFamily:F}}>Tomar selfie</span></div>
+            </div>
+          </div>
+        </Card>
+      </div>
+      <Footer step={4}><Btn onClick={()=>setScr("ine_instructions")}>Continuar</Btn><BtnLink onClick={()=>setScr("address")}>Cancelar</BtnLink></Footer>
+    </>),
+
+    ine_instructions:(<>
+      <Header title="Verificación de identidad" onBack={()=>setScr("verify_id")}/>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card>
+          <div style={{textAlign:"center",marginBottom:12}}><ImgSlot name="cameraIcon"/></div>
+          <div style={{fontSize:15,fontWeight:700,color:C.midnight,fontFamily:F,marginBottom:14}}>Recomendaciones para la captura</div>
+          <div style={{fontSize:13,fontWeight:600,color:C.midnight,fontFamily:F,marginBottom:8}}>Escanear INE:</div>
+          <Bullet t="Coloca tu INE vigente sobre superficie plana y fondo oscuro"/>
+          <Bullet t="Evita reflejos de luz artificial"/>
+          <Bullet t="Confirma que tus datos se vean claramente"/>
+          <div style={{fontSize:13,fontWeight:600,color:C.midnight,fontFamily:F,margin:"14px 0 8px"}}>Tomar Selfie:</div>
+          <Bullet t="Busca un lugar bien iluminado, evita sombras"/>
+          <Bullet t="Evita sombrero, gorra o gafas de sol"/>
+          <Bullet t="Sigue las instrucciones en pantalla"/>
+        </Card>
+      </div>
+      <Footer step={4}><Btn onClick={()=>sim("ine_scan")}>Continuar</Btn><BtnLink onClick={()=>setScr("verify_id")}>Cancelar</BtnLink></Footer>
+    </>),
+
+    ine_scan:(
+      <div style={{background:"#0A0A0A",flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",padding:"60px 16px"}}>
+        <span style={{color:C.white,fontSize:14,fontWeight:600,fontFamily:F,background:"rgba(0,0,0,0.6)",padding:"6px 18px",borderRadius:20,marginBottom:32}}>PARTE DELANTERA</span>
+        <div style={{width:280,height:180,border:"2.5px solid #4CAF50",borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{color:"rgba(255,255,255,0.4)",fontSize:13,fontFamily:F,textAlign:"center",padding:16}}>Coloque el documento en el rectángulo</span>
+        </div>
+        <span style={{color:"rgba(255,255,255,0.5)",fontSize:13,fontFamily:F,marginTop:14}}>Manténgase estable</span>
+        <div style={{position:"absolute",bottom:40,padding:"0 40px",width:"100%",boxSizing:"border-box"}}><Btn onClick={()=>sim("selfie_scan")}>Capturar INE</Btn></div>
+      </div>
+    ),
+
+    selfie_scan:(
+      <div style={{background:"#0A0A0A",flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",padding:"60px 16px"}}>
+        <span style={{color:C.white,fontSize:14,fontWeight:600,fontFamily:F,background:"rgba(0,0,0,0.6)",padding:"6px 18px",borderRadius:20,marginBottom:32}}>Movimientos de cabeza</span>
+        <div style={{width:200,height:200,border:"2.5px solid #4CAF50",borderRadius:100,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{width:56,height:56,borderRadius:28,border:"2px solid rgba(255,255,255,0.3)"}}/>
+        </div>
+        <span style={{color:"#4CAF50",fontSize:14,fontFamily:F,marginTop:14,fontWeight:600}}>¡Bien! Vuelva a mirar al CENTRO</span>
+        <div style={{position:"absolute",bottom:40,padding:"0 40px",width:"100%",boxSizing:"border-box"}}><Btn onClick={()=>sim("id_result")}>Capturar selfie</Btn></div>
+      </div>
+    ),
+
+    id_result:<Result success title="Identidad verificada" desc="Tu identidad ha sido verificada correctamente." btnText="Continuar" onBtn={()=>setScr("terms")} imgSlot="successIcon"/>,
+    id_fail:<Result success={false} title="No fue posible validar tu identidad" desc="Acércate a la sucursal BBVA más cercana para completar tu apertura de cuenta." btnText="Volver al inicio" onBtn={()=>{reset();setScr("start")}} imgSlot="errorIcon"/>,
+
+    terms:(<>
+      <Header title="Términos y condiciones" onBack={()=>setScr("id_result")}/>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card>
+          <p style={{fontSize:13,color:C.g600,fontFamily:F,margin:"0 0 18px",lineHeight:1.5}}>Consulta y acepta las siguientes autorizaciones:</p>
+          <Check checked={tc.terms} onChange={v=>setTc(p=>({...p,terms:v}))}>He leído los <Link>Términos y Condiciones</Link> y acepto la contratación de mi Libretón Básico Cuenta Digital.</Check>
+          <Check checked={tc.privacy} onChange={v=>setTc(p=>({...p,privacy:v}))}>Autorizo el tratamiento de mis datos personales conforme al <Link>Aviso de Privacidad de BBVA</Link>.</Check>
+        </Card>
+        <Msg>Para autorizar la contratación, recibirás un código de seguridad vía SMS al número celular que nos proporcionaste.</Msg>
+      </div>
+      <Footer step={5}><Btn onClick={()=>sim("otp")} disabled={!tc.terms||!tc.privacy}>Continuar</Btn><BtnLink onClick={()=>setScr("cancel")}>Cancelar</BtnLink></Footer>
+    </>),
+
+    otp:(<>
+      <div style={{background:C.electric,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <span style={{color:C.white,fontWeight:800,fontSize:15,fontFamily:F,letterSpacing:1.5}}>BBVA</span>
+        <span style={{cursor:"pointer"}} onClick={()=>setScr("terms")}><CloseIcon c={C.white} s={16}/></span>
+      </div>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card>
+          <div style={{fontSize:19,fontWeight:700,color:C.midnight,fontFamily:F,marginBottom:6}}>Código de seguridad</div>
+          <p style={{fontSize:14,color:C.g600,fontFamily:F,margin:"0 0 18px",lineHeight:1.5}}>Ingresa el código para autorizar la contratación de tu Libretón Básico Cuenta Digital.</p>
+          <Input label="Código de seguridad" value={otp} onChange={v=>setOtp(v.replace(/\D/g,"").slice(0,6))} type="password"
+            error={otpA===1?"Código incorrecto. Te quedan 2 intentos.":otpA===2?"Código incorrecto. Te queda 1 intento.":""}/>
+          <span style={{fontSize:13,color:C.royalDark,fontFamily:F,cursor:"pointer",fontWeight:500}}>¿No recibiste el SMS? Solicita uno nuevo</span>
+        </Card>
+        <Card p="16px">
+          <div style={{textAlign:"center",marginBottom:4}}><ImgSlot name="smsIcon" fallback={<span style={{fontSize:28}}>📱</span>}/></div>
+          <p style={{fontSize:12,color:C.g600,fontFamily:F,margin:0,textAlign:"center",lineHeight:1.5}}>Tienes 3 intentos para introducir correctamente el código; de lo contrario deberás empezar de nuevo.</p>
+        </Card>
+      </div>
+      <Footer step={5}><Btn onClick={()=>{
+        if(otp==="123456"){sim("success")}
+        else{const a=otpA+1;setOtpA(a);setOtp("");if(a>=3)setScr("otp_blocked")}
+      }} disabled={otp.length<4}>Continuar</Btn></Footer>
+    </>),
+
+    otp_blocked:<Result success={false} title="Límite de intentos superado" desc="Has superado el máximo de 3 intentos para ingresar el código de seguridad." btnText="Volver al inicio" onBtn={()=>{reset();setScr("start")}}/>,
+
+    success:(<>
+      <div style={{background:C.electric,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <span style={{color:C.white,fontWeight:800,fontSize:15,fontFamily:F,letterSpacing:1.5}}>BBVA</span>
+        <span style={{color:C.white,fontSize:13,fontFamily:F,cursor:"pointer",opacity:.85}}>Cerrar</span>
+      </div>
+      <div style={{flex:1,overflow:"auto",padding:16}}>
+        <Card p="32px 20px">
+          <div style={{textAlign:"center"}}>{IMAGES.successIcon.src?<ImgSlot name="successIcon"/>:<SuccessIconLg/>}</div>
+          <div style={{fontSize:23,fontWeight:700,color:C.midnight,fontFamily:F,textAlign:"center",margin:"20px 0 8px"}}>¡Felicidades!</div>
+          <p style={{fontSize:15,color:C.g600,fontFamily:F,textAlign:"center",margin:"0 0 20px",lineHeight:1.5}}>Ya tienes tu Libretón Básico Cuenta Digital de BBVA.</p>
+          <div style={{background:C.g100,borderRadius:10,padding:16}}>
+            <div style={{fontSize:12,color:C.g600,fontFamily:F}}>Producto contratado</div>
+            <div style={{fontSize:15,fontWeight:600,color:C.midnight,fontFamily:F,marginBottom:10}}>Libretón Básico Cuenta Digital</div>
+            <div style={{fontSize:12,color:C.g600,fontFamily:F}}>Folio de contratación</div>
+            <div style={{fontSize:15,fontWeight:600,color:C.midnight,fontFamily:F}}>543535230</div>
+          </div>
+        </Card>
+        <Msg>Descarga la app BBVA y sigue los pasos para activar tus Servicios Digitales.</Msg>
+      </div>
+      <Footer><Btn onClick={()=>{}}>Descarga la App BBVA</Btn><BtnLink onClick={()=>{reset();setScr("start")}}>Salir</BtnLink></Footer>
+    </>),
+
+    cancel:(<>
+      <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 16px",textAlign:"center"}}>
+        <div style={{width:64,height:64,background:"#FEF2F2",borderRadius:32,margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center"}}><CloseIcon c={C.red} s={20}/></div>
+        <div style={{fontSize:19,fontWeight:700,color:C.midnight,fontFamily:F,marginBottom:10}}>Contratación cancelada</div>
+        <p style={{fontSize:14,color:C.g600,fontFamily:F,lineHeight:1.5,margin:"0 0 28px"}}>Has decidido cancelar el proceso de contratación de la Libretón Básico Cuenta Digital.</p>
+      </div>
+      <Footer><Btn onClick={()=>{reset();setScr("start")}}>Volver al inicio</Btn></Footer>
+    </>),
+  };
+
+  if(loading)return(
+    <div style={{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100vh",background:C.bg}}>
+      <Phone>
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          {IMAGES.spinnerIcon.src
+            ?<ImgSlot name="spinnerIcon"/>
+            :<div style={{width:44,height:44,border:`3px solid ${C.g300}`,borderTop:`3px solid ${C.electric}`,borderRadius:"50%",animation:"sp 0.8s linear infinite"}}/>
+          }
+          <p style={{fontSize:14,color:C.g500,fontFamily:F,marginTop:16}}>Procesando...</p>
+        </div>
+      </Phone>
+    </div>
+  );
+
+  return(
+    <div style={{display:"flex",justifyContent:"center",alignItems:"flex-start",minHeight:"100vh",background:C.bg,padding:"20px 16px"}}>
+      <div>
+        <div style={{textAlign:"center",marginBottom:12}}><span style={{fontSize:11,color:C.g500,fontFamily:F,letterSpacing:.5}}>Prototipo · Apertura de Cuenta BBVA × TaxDown</span></div>
+        <Phone>{S[scr]}</Phone>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5,justifyContent:"center",marginTop:14,maxWidth:375}}>
+          {[["start","Inicio"],["onboarding","Oferta"],["checks","Checks"],["personal","Datos"],["address","Domicilio"],["verify_id","ID"],["terms","T&C"],["otp","OTP"],["success","Éxito"],["id_fail","ID Fail"],["otp_blocked","OTP Bloq."],["cancel","Cancel"]].map(([k,l])=>(
+            <button key={k} onClick={()=>{setScr(k);setErr({})}} style={{padding:"4px 10px",fontSize:10,borderRadius:6,border:"none",background:scr===k?C.electric:C.white,color:scr===k?C.white:C.g600,cursor:"pointer",fontFamily:F,fontWeight:scr===k?600:400,boxShadow:"0 1px 3px rgba(0,0,0,0.06)",transition:"all 0.15s"}}>{l}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>,document.getElementById("root"));
+</script>
+</body>
+</html>
