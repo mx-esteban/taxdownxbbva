@@ -23,14 +23,14 @@ const {useState}=React;
 // IMAGE SLOTS - Replace src values with your actual image URLs
 // ============================================================
 const IMAGES={
-  headerCoBrand:{src:"./assets/headerCoBrand.png",alt:"BBVA × TaxDown",w:200,h:36},
-  cardIllustration:{src:"./assets/cardIllustration.png",alt:"Microilustración BBVA cuenta",w:192,h:192},
-  cameraIcon:{src:"./assets/cameraIcon.png",alt:"Icono cámara",w:48,h:48},
-  ineIcon:{src:"./assets/ineIcon.png",alt:"Icono INE",w:48,h:48},
-  selfieIcon:{src:"./assets/selfieIcon.png",alt:"Icono selfie",w:48,h:48},
-  successIcon:{src:"./assets/successIcon.png",alt:"Icono éxito",w:72,h:72},
-  errorIcon:{src:"./assets/errorIcon.png",alt:"Icono error",w:56,h:56},
-  smsIcon:{src:"./assets/smsIcon.png",alt:"Icono SMS",w:44,h:44},
+  headerCoBrand:{src:"",alt:"BBVA × TaxDown",w:"100%",h:"100%"},
+  cardIllustration:{src:"",alt:"Microilustración BBVA cuenta",w:192,h:192},
+  cameraIcon:{src:"",alt:"Icono cámara",w:48,h:48},
+  ineIcon:{src:"",alt:"Icono INE",w:48,h:48},
+  selfieIcon:{src:"",alt:"Icono selfie",w:48,h:48},
+  successIcon:{src:"",alt:"Icono éxito",w:72,h:72},
+  errorIcon:{src:"",alt:"Icono error",w:56,h:56},
+  smsIcon:{src:"",alt:"Icono SMS",w:44,h:44},
   spinnerIcon:{src:"",alt:"Spinner",w:48,h:48},
 };
 
@@ -55,7 +55,7 @@ const SERIF="Georgia,'Times New Roman',serif";
 // ============================================================
 const ImgSlot=({name,fallback,style:xs={}})=>{
   const img=IMAGES[name];
-  if(img&&img.src)return <img src={img.src} alt={img.alt} style={{width:img.w,height:img.h,objectFit:"contain",...xs}}/>;
+  if(img&&img.src)return <img src={img.src} alt={img.alt} style={{width:img.w,height:img.h,objectFit:"cover",display:"block",...xs}}/>;
   return fallback||<div style={{width:img?.w||48,height:img?.h||48,background:C.blueLight,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",border:`1px dashed ${C.g400}`,...xs}}><span style={{fontSize:9,color:C.g500,fontFamily:F,textAlign:"center",padding:4}}>{img?.alt||name}</span></div>;
 };
 
@@ -88,15 +88,18 @@ const Header=({title,onBack})=>(
 );
 
 const CoBrandHeader=({h=160,compact})=>(
-  <div style={{height:h,background:C.electric,display:"flex",flexDirection:compact?"column":"row",alignItems:"center",justifyContent:"center",gap:compact?12:20,flexShrink:0}}>
-    <ImgSlot name="headerCoBrand" fallback={
-      <div style={{display:"flex",alignItems:"center",gap:compact?16:20}}>
-        <span style={{color:C.white,fontWeight:800,fontSize:compact?18:20,letterSpacing:2,fontFamily:F}}>BBVA</span>
-        <div style={{width:1,height:compact?24:32,background:"rgba(255,255,255,0.3)"}}/>
-        <span style={{color:C.white,fontWeight:600,fontSize:compact?13:14,letterSpacing:.5,fontFamily:F}}>taxdown.</span>
-      </div>
-    }/>
-    {compact&&<span style={{color:"rgba(255,255,255,0.85)",fontSize:15,fontWeight:600,textAlign:"center",fontFamily:F}}>Tu devolución, en buenas manos</span>}
+  <div style={{height:h,background:C.electric,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
+    {IMAGES.headerCoBrand.src
+      ? <ImgSlot name="headerCoBrand"/>
+      : <>
+          <div style={{display:"flex",alignItems:"center",gap:compact?16:20}}>
+            <span style={{color:C.white,fontWeight:800,fontSize:compact?18:20,letterSpacing:2,fontFamily:F}}>BBVA</span>
+            <div style={{width:1,height:compact?24:32,background:"rgba(255,255,255,0.3)"}}/>
+            <span style={{color:C.white,fontWeight:600,fontSize:compact?13:14,letterSpacing:.5,fontFamily:F}}>taxdown.</span>
+          </div>
+          {compact&&<span style={{color:"rgba(255,255,255,0.85)",fontSize:15,fontWeight:600,textAlign:"center",fontFamily:F,marginTop:12}}>Tu devolución, en buenas manos</span>}
+        </>
+    }
   </div>
 );
 
@@ -248,16 +251,7 @@ function App(){
       <div style={{flex:1,overflow:"auto",padding:"0 16px",marginTop:-20}}>
         <Card p="28px 20px">
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-            <ImgSlot name="cardIllustration" fallback={
-              <div style={{width:192,height:192,background:`linear-gradient(145deg,${C.blueLight},${C.serene})`,borderRadius:24,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-                <div style={{width:80,height:80,background:C.electric,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <span style={{color:C.white,fontWeight:800,fontSize:16,letterSpacing:1.5,fontFamily:F}}>BBVA</span>
-                </div>
-                <div style={{position:"absolute",bottom:16,right:16,width:32,height:32,background:"#F5C842",borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <span style={{color:C.electric,fontSize:16,fontWeight:700}}>↓</span>
-                </div>
-              </div>
-            }/>
+            <ImgSlot name="cardIllustration"/>
           </div>
           <div style={{fontSize:20,fontWeight:700,color:C.midnight,textAlign:"center",textTransform:"uppercase",letterSpacing:.5,fontFamily:SERIF,marginBottom:10}}>Abre tu cuenta BBVA<br/>para recibir tu devolución</div>
           <div style={{textAlign:"center",color:C.g600,fontSize:11,fontWeight:500,textTransform:"uppercase",letterSpacing:.5,fontFamily:F}}>Nos aliamos con BBVA para que recuperes<br/>tu saldo de forma segura y sin complicaciones.</div>
