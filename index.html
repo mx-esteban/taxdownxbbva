@@ -301,7 +301,7 @@ function App(){
       <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 16px"}}>
         <Card p="32px 20px">
           <div style={{textAlign:"center"}}>
-            <div style={{width:56,height:56,borderRadius:28,background:success?C.greenLight:"#FEF2F2",margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <div style={{width:72,height:72,borderRadius:36,background:success?C.greenLight:"#FEF2F2",margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
               {imgSlot&&IMAGES[imgSlot]?.src?<ImgSlot name={imgSlot}/>:success?<CheckIcon c={C.greenDark} s={22}/>:<CloseIcon c={C.red} s={20}/>}
             </div>
             <div style={{fontSize:18,fontWeight:700,color:C.midnight,fontFamily:F,marginBottom:8}}>{title}</div>
