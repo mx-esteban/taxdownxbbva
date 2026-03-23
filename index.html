@@ -8,6 +8,75 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <style>
+  /* Tiempos Text — solo para títulos */
+@font-face {
+  font-family: 'TiemposText';
+  src: url('./assets/fonts/TiemposTextWeb-Regular.woff2') format('woff2'),
+       url('./assets/fonts/TiemposTextWeb-Regular.woff') format('woff'),
+       url('./assets/fonts/TiemposTextWeb-Regular.eot') format('embedded-opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TiemposText';
+  src: url('./assets/fonts/TiemposTextWeb-RegularItalic.woff2') format('woff2'),
+       url('./assets/fonts/TiemposTextWeb-RegularItalic.woff') format('woff'),
+       url('./assets/fonts/TiemposTextWeb-RegularItalic.eot') format('embedded-opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Benton Sans BBVA — para todo lo demás */
+@font-face {
+  font-family: 'BentonSansBBVA';
+  src: url('./assets/fonts/BentonSansBBVA-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BentonSansBBVA';
+  src: url('./assets/fonts/BentonSansBBVA-Book.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BentonSansBBVA';
+  src: url('./assets/fonts/BentonSansBBVA-BookItalic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BentonSansBBVA';
+  src: url('./assets/fonts/BentonSansBBVA-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BentonSansBBVA';
+  src: url('./assets/fonts/BentonSansBBVA-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BentonSansBBVA';
+  src: url('./assets/fonts/BentonSansBBVA-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#EDEEF2;min-height:100vh}
 input,select,button{font-family:inherit}
@@ -47,9 +116,8 @@ const C={
 
 const STEPS={checks:1,personal:2,address:3,verify_id:4,ine_instructions:4,ine_scan:4,selfie_scan:4,id_result:4,terms:5,otp:5};
 const TOTAL=5;
-const F="system-ui,sans-serif";
-const SERIF="Georgia,'Times New Roman',serif";
-
+const F = "'BentonSansBBVA', system-ui, sans-serif";
+const SERIF = "'TiemposText', Georgia, serif";
 // ============================================================
 // IMAGE SLOT COMPONENT
 // ============================================================
